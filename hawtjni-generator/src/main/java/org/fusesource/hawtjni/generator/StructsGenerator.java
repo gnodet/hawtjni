@@ -288,6 +288,7 @@ public class StructsGenerator extends JNIGenerator {
             JNIType type = field.getType(), type64 = field.getType64();
             String simpleName = type.getSimpleName();
             JNIFieldAccessor accessor = field.getAccessor();
+            boolean allowConversion = !type.equals(type64);
             output("\t");
             if (type.isPrimitive()) {
                 if (!accessor.isNonMemberSetter())
@@ -296,35 +297,46 @@ public class StructsGenerator extends JNIGenerator {
                     String setterStart = accessor.setter().split("\\(")[0];
                     output(setterStart + "(");
                     if (accessor.isNonMemberSetter())
-                        output("lpStruct, ");
+                    output("lpStruct, ");
                 } else {
-                    output(accessor.setter());
-                    output(" = ");
+                output(accessor.setter());
+                output(" = ");
                 }
-                output(field.getCast());
+                if (field.isSharedPointer())
+                    output("std::make_shared<"+type.getTypeSignature2(allowConversion)+">(");
+                else
+                    output(field.getCast());
+
                 if (field.isPointer()) {
-                    output("(intptr_t)");
+	            output("(intptr_t)");
                 }
                 if (isCPP) {
-                    output("env->Get");
+	            output("env->Get");
                 } else {
-                    output("(*env)->Get");
+	            output("(*env)->Get");
                 }
                 output(type.getTypeSignature1(!type.equals(type64)));
                 if (isCPP) {
-                    output("Field(lpObject, ");
+	            output("Field(lpObject, ");
                 } else {
-                    output("Field(env, lpObject, ");
+	            output("Field(env, lpObject, ");
                 }
-                output(field.getDeclaringClass().getSimpleName());
+	        output(field.getDeclaringClass().getSimpleName());
                 output("Fc.");
                 output(field.getName());
+                if (field.isSharedPointer())
+	            output(")");
                 if (accessor.isMethodSetter())
-                    output(")");
+	            output(")");
                 output(");");
             } else if (type.isArray()) {
                 JNIType componentType = type.getComponentType(), componentType64 = type64.getComponentType();
                 if (componentType.isPrimitive()) {
+                    if (field.isSharedPointer()) {
+                        output("(&");
+                        output("lpStruct->"+accessor);
+                        output("));");
+		    }
                     outputln("{");
                     output("\t");
                     output(type.getTypeSignature2(!type.equals(type64)));
@@ -473,7 +485,7 @@ public class StructsGenerator extends JNIGenerator {
                 output(field.getName());
                 output(", ");
                 output("("+type.getTypeSignature2(allowConversion)+")");
-                if( field.isPointer() ) {
+                if (field.isPointer()) {
                     output("(intptr_t)");
                 }
                 if (!accessor.isNonMemberGetter())
@@ -483,9 +495,14 @@ public class StructsGenerator extends JNIGenerator {
                     output(getterStart + "(");
                     if (accessor.isNonMemberGetter())
                         output("lpStruct");
+                    if (field.isSharedPointer())
+                      output("->"+field.getName());
                     output(")");
                 } else {
                     output(accessor.getter());
+                }
+                if (field.isSharedPointer()) {
+                    output(".get()");
                 }
                 output(");");
             } else if (type.isArray()) {
@@ -610,3 +627,4 @@ public class StructsGenerator extends JNIGenerator {
     }
 
 }
+
