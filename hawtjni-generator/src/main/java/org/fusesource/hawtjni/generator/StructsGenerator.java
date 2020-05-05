@@ -10,19 +10,18 @@
  *******************************************************************************/
 package org.fusesource.hawtjni.generator;
 
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-
 import org.fusesource.hawtjni.generator.model.JNIClass;
 import org.fusesource.hawtjni.generator.model.JNIField;
 import org.fusesource.hawtjni.generator.model.JNIFieldAccessor;
 import org.fusesource.hawtjni.generator.model.JNIType;
 import org.fusesource.hawtjni.runtime.ClassFlag;
 
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
 /**
- * 
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
 public class StructsGenerator extends JNIGenerator {
@@ -43,11 +42,11 @@ public class StructsGenerator extends JNIGenerator {
 
     public void generateIncludes() {
         if (header) {
-            outputln("#include \""+getOutputName()+".h\"");
+            outputln("#include \"" + getOutputName() + ".h\"");
         } else {
-            outputln("#include \""+getOutputName()+".h\"");
+            outputln("#include \"" + getOutputName() + ".h\"");
             outputln("#include \"hawtjni.h\"");
-            outputln("#include \""+getOutputName()+"_structs.h\"");
+            outputln("#include \"" + getOutputName() + "_structs.h\"");
         }
         outputln();
     }
@@ -100,13 +99,13 @@ public class StructsGenerator extends JNIGenerator {
 
     void generateSourceStart(JNIClass clazz) {
         String conditional = clazz.getConditional();
-        if (conditional!=null) {
-            outputln("#if "+conditional);
+        if (conditional != null) {
+            outputln("#if " + conditional);
         }
     }
 
     void generateSourceEnd(JNIClass clazz) {
-        if (clazz.getConditional()!=null) {
+        if (clazz.getConditional() != null) {
             outputln("#endif");
         }
     }
@@ -120,11 +119,11 @@ public class StructsGenerator extends JNIGenerator {
     }
 
     void generateBlankMacros(JNIClass clazz) {
-        
-        if (clazz.getConditional()==null) {
+
+        if (clazz.getConditional() == null) {
             return;
         }
-        
+
         String simpleName = clazz.getSimpleName();
         outputln("#else");
         output("#define cache");
@@ -278,12 +277,13 @@ public class StructsGenerator extends JNIGenerator {
             }
         }
         List<JNIField> fields = clazz.getDeclaredFields();
+        int sharePtrIndex = 0;
         for (JNIField field : fields) {
             if (ignoreField(field))
                 continue;
             String conditional = field.getConditional();
-            if (conditional!=null) {
-                outputln("#if "+conditional);
+            if (conditional != null) {
+                outputln("#if " + conditional);
             }
             JNIType type = field.getType(), type64 = field.getType64();
             String simpleName = type.getSimpleName();
@@ -297,46 +297,46 @@ public class StructsGenerator extends JNIGenerator {
                     String setterStart = accessor.setter().split("\\(")[0];
                     output(setterStart + "(");
                     if (accessor.isNonMemberSetter())
-                    output("lpStruct, ");
+                        output("lpStruct, ");
                 } else {
-                output(accessor.setter());
-                output(" = ");
+                    output(accessor.setter());
+                    output(" = ");
                 }
                 if (field.isSharedPointer())
-                    output("std::make_shared<"+type.getTypeSignature2(allowConversion)+">(");
+                    output("std::make_shared<" + type.getTypeSignature2(allowConversion) + ">(");
                 else
                     output(field.getCast());
 
                 if (field.isPointer()) {
-	            output("(intptr_t)");
+                    output("(intptr_t)");
                 }
                 if (isCPP) {
-	            output("env->Get");
+                    output("env->Get");
                 } else {
-	            output("(*env)->Get");
+                    output("(*env)->Get");
                 }
                 output(type.getTypeSignature1(!type.equals(type64)));
                 if (isCPP) {
-	            output("Field(lpObject, ");
+                    output("Field(lpObject, ");
                 } else {
-	            output("Field(env, lpObject, ");
+                    output("Field(env, lpObject, ");
                 }
-	        output(field.getDeclaringClass().getSimpleName());
+                output(field.getDeclaringClass().getSimpleName());
                 output("Fc.");
                 output(field.getName());
                 if (field.isSharedPointer())
-	            output(")");
+                    output(")");
                 if (accessor.isMethodSetter())
-	            output(")");
+                    output(")");
                 output(");");
             } else if (type.isArray()) {
                 JNIType componentType = type.getComponentType(), componentType64 = type64.getComponentType();
                 if (componentType.isPrimitive()) {
                     if (field.isSharedPointer()) {
                         output("(&");
-                        output("lpStruct->"+accessor);
+                        output("lpStruct->" + accessor);
                         output("));");
-		    }
+                    }
                     outputln("{");
                     output("\t");
                     output(type.getTypeSignature2(!type.equals(type64)));
@@ -401,7 +401,7 @@ public class StructsGenerator extends JNIGenerator {
                 output("\t}");
             }
             outputln();
-            if (conditional!=null) {
+            if (conditional != null) {
                 outputln("#endif");
             }
         }
@@ -428,8 +428,8 @@ public class StructsGenerator extends JNIGenerator {
         output("Fc.cached) cache");
         output(simpleName);
         outputln("Fields(env, lpObject);");
-        if( clazz.getFlag(ClassFlag.ZERO_OUT) ) {
-            outputln("memset(lpStruct, 0, sizeof(struct "+clazzName+"));");
+        if (clazz.getFlag(ClassFlag.ZERO_OUT)) {
+            outputln("memset(lpStruct, 0, sizeof(struct " + clazzName + "));");
         }
         generateGetFields(clazz);
         outputln("\treturn lpStruct;");
@@ -460,12 +460,12 @@ public class StructsGenerator extends JNIGenerator {
             if (ignoreField(field))
                 continue;
             String conditional = field.getConditional();
-            if (conditional!=null) {
-                outputln("#if "+conditional);
+            if (conditional != null) {
+                outputln("#if " + conditional);
             }
             JNIType type = field.getType(), type64 = field.getType64();
             boolean allowConversion = !type.equals(type64);
-            
+
             String simpleName = type.getSimpleName();
             JNIFieldAccessor accessor = field.getAccessor();
             if (type.isPrimitive()) {
@@ -484,7 +484,7 @@ public class StructsGenerator extends JNIGenerator {
                 output("Fc.");
                 output(field.getName());
                 output(", ");
-                output("("+type.getTypeSignature2(allowConversion)+")");
+                output("(" + type.getTypeSignature2(allowConversion) + ")");
                 if (field.isPointer()) {
                     output("(intptr_t)");
                 }
@@ -496,7 +496,7 @@ public class StructsGenerator extends JNIGenerator {
                     if (accessor.isNonMemberGetter())
                         output("lpStruct");
                     if (field.isSharedPointer())
-                      output("->"+field.getName());
+                        output("->" + field.getName());
                     output(")");
                 } else {
                     output(accessor.getter());
@@ -580,7 +580,7 @@ public class StructsGenerator extends JNIGenerator {
                 output("\t}");
             }
             outputln();
-            if (conditional!=null) {
+            if (conditional != null) {
                 outputln("#endif");
             }
         }
